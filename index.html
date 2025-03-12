@@ -8,13 +8,15 @@
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             color: #333;
         }
-        h1 {
+        h1, h2, h3 {
             color: #2c3e50;
+        }
+        h1 {
             text-align: center;
             margin-bottom: 30px;
         }
@@ -28,14 +30,17 @@
             margin-bottom: 20px;
             padding-bottom: 20px;
             border-bottom: 1px solid #eee;
+            position: relative;
         }
         .component-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            padding-right: 30px; /* Make room for X button */
             font-weight: bold;
             color: #2980b9;
+            position: relative;
         }
         .component-states {
             display: grid;
@@ -58,6 +63,8 @@
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .results {
             margin-top: 30px;
@@ -92,10 +99,12 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 20px;
-            display: block;
-            width: 100%;
             transition: background-color 0.3s;
+        }
+        button.small {
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #3498db;
@@ -105,87 +114,174 @@
             font-size: 14px;
             color: #7f8c8d;
         }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .component-group .remove-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+            position: relative;
+        }
+        .form-row .remove-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .remove-btn:hover {
+            background-color: #c0392b;
+        }
+        .add-state-btn {
+            margin-top: 10px;
+            background-color: #27ae60;
+        }
+        .add-state-btn:hover {
+            background-color: #2ecc71;
+        }
+        .add-component-form {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 8px;
+        }
+        .form-group {
+            flex: 1;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        #component-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-left: 20px;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .modal-title {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>IoT Device Power Calculator</h1>
     
     <div class="calculator">
-        <div class="component-group">
-            <div class="component-header">
-                <span>ESP</span>
-                <span>Seconds per hour</span>
-            </div>
-            <div class="component-states">
-                <div class="state-input">
-                    <label>Modem-off (100 mW)</label>
-                    <input type="number" id="esp-modem-off" value="0" min="0" max="3600">
+        <div id="components-container">
+            <!-- Components will be loaded here -->
+        </div>
+
+        <!-- Modal for adding new state -->
+        <div id="add-state-modal" class="modal">
+            <div class="modal-content">
+                <h3 class="modal-title">Add New State</h3>
+                <div class="form-group">
+                    <label for="modal-state-name">State Name</label>
+                    <input type="text" id="modal-state-name" placeholder="e.g. Active">
                 </div>
-                <div class="state-input">
-                    <label>Deep sleep (0.017 mW)</label>
-                    <input type="number" id="esp-deep-sleep" value="3600" min="0" max="3600">
+                <div class="form-group" style="margin-top: 10px;">
+                    <label for="modal-state-power">Power Consumption (mW)</label>
+                    <input type="number" id="modal-state-power" min="0" step="0.001" placeholder="e.g. 25">
                 </div>
+                <div class="modal-buttons">
+                    <button onclick="closeModal()">Cancel</button>
+                    <button onclick="addStateFromModal()" style="background-color: #27ae60;">Add State</button>
+                </div>
+                <input type="hidden" id="modal-component-id">
             </div>
         </div>
 
-        <div class="component-group">
-            <div class="component-header">
-                <span>XM125 Sensor</span>
-                <span>Seconds per hour</span>
+        <div class="add-component-form">
+            <h3>Add New Component</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="new-component-name">Component Name</label>
+                    <input type="text" id="new-component-name" placeholder="e.g. Temperature Sensor">
+                </div>
             </div>
-            <div class="component-states">
-                <div class="state-input">
-                    <label>High-accuracy sensing (45 mW)</label>
-                    <input type="number" id="xm125-high-accuracy" value="0" min="0" max="3600">
+            <div id="new-component-states">
+                <!-- New component states will be added here -->
+                <div class="form-row state-row">
+                    <div class="form-group">
+                        <label>State Name</label>
+                        <input type="text" class="state-name" placeholder="e.g. Active">
+                    </div>
+                    <div class="form-group">
+                        <label>Power (mW)</label>
+                        <input type="number" class="state-power" min="0" step="0.001" placeholder="e.g. 25">
+                    </div>
+                    <button type="button" class="remove-btn" onclick="removeStateRow(this)">×</button>
                 </div>
-                <div class="state-input">
-                    <label>Low-power sensing (6 mW)</label>
-                    <input type="number" id="xm125-low-power" value="0" min="0" max="3600">
-                </div>
-
             </div>
-        </div>
-
-        <div class="component-group">
-            <div class="component-header">
-                <span>SIM7080g Modem</span>
-                <span>Seconds per hour</span>
-            </div>
-            <div class="component-states">
-                <div class="state-input">
-                    <label>ON (250 mW)</label>
-                    <input type="number" id="sim7080g-on" value="0" min="0" max="3600">
-                </div>
-                <div class="state-input">
-                    <label>Low-power ON (70 mW)</label>
-                    <input type="number" id="sim7080g-low-power-on" value="0" min="0" max="3600">
-                </div>
-                <div class="state-input">
-                    <label>Low-power idle/sleep (2 mW)</label>
-                    <input type="number" id="sim7080g-low-power-idle" value="0" min="0" max="3600">
-                </div>
-
+            <button type="button" class="small add-state-btn" onclick="addStateRow()">+ Add State</button>
+            <div class="actions">
+                <button type="button" onclick="addNewComponent()">Add Component</button>
             </div>
         </div>
-
-        <div class="component-group">
-            <div class="component-header">
-                <span>LED Shift Register (74HC595)</span>
-                <span>Seconds per hour</span>
-            </div>
-            <div class="component-states">
-                <div class="state-input">
-                    <label>ON (15 mW)</label>
-                    <input type="number" id="led-shift-on" value="0" min="0" max="3600">
-                </div>
-                <div class="state-input">
-                    <label>OFF (0.4 mW)</label>
-                    <input type="number" id="led-shift-off" value="3600" min="0" max="3600">
-                </div>
-            </div>
-        </div>
-
-        <button id="calculate-btn">Calculate Power Consumption</button>
         
         <div class="results">
             <h2>Results</h2>
@@ -205,10 +301,7 @@
                 <span>Component Breakdown:</span>
             </div>
             <div id="component-breakdown">
-                <div style="margin-left: 20px;">ESP: <span id="esp-power">0 mW</span></div>
-                <div style="margin-left: 20px;">XM125: <span id="xm125-power">0 mW</span></div>
-                <div style="margin-left: 20px;">SIM7080g: <span id="sim7080g-power">0 mW</span></div>
-                <div style="margin-left: 20px;">LED Shift Register: <span id="led-shift-power">0 mW</span></div>
+                <!-- Component breakdown will be displayed here -->
             </div>
         </div>
         
@@ -218,172 +311,341 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Define power values in mW
-            const powerValues = {
-                esp: {
-                    modemOff: 100,
-                    deepSleep: 0.017
-                },
-                xm125: {
-                    highAccuracy: 45,
-                    lowPower: 6
-                },
-                sim7080g: {
-                    on: 250,
-                    lowPowerOn: 70,
-                    lowPowerIdle: 2
-                },
-                ledShift: {
-                    on: 15,
-                    off: 0.4
-                }
-            };
-
-            // Get all input fields
-            const inputs = {
-                esp: {
-                    modemOff: document.getElementById('esp-modem-off'),
-                    deepSleep: document.getElementById('esp-deep-sleep')
-                },
-                xm125: {
-                    highAccuracy: document.getElementById('xm125-high-accuracy'),
-                    lowPower: document.getElementById('xm125-low-power')
-                },
-                sim7080g: {
-                    on: document.getElementById('sim7080g-on'),
-                    lowPowerOn: document.getElementById('sim7080g-low-power-on'),
-                    lowPowerIdle: document.getElementById('sim7080g-low-power-idle')
-                },
-                ledShift: {
-                    on: document.getElementById('led-shift-on'),
-                    off: document.getElementById('led-shift-off')
-                }
-            };
-
-            // Get result elements
-            const results = {
-                avgPower: document.getElementById('avg-power'),
-                dailyEnergy: document.getElementById('daily-energy'),
-                annualEnergy: document.getElementById('annual-energy'),
-                espPower: document.getElementById('esp-power'),
-                xm125Power: document.getElementById('xm125-power'),
-                sim7080gPower: document.getElementById('sim7080g-power'),
-                ledShiftPower: document.getElementById('led-shift-power')
-            };
-
-            // Add event listener to calculate button
-            document.getElementById('calculate-btn').addEventListener('click', calculatePower);
-
-            // Function to calculate power consumption
-            function calculatePower() {
-                // Normalize inputs to ensure they add up to 3600 seconds per component
-                normalizeInputGroup([inputs.esp.modemOff, inputs.esp.deepSleep]);
-                normalizeInputGroup([inputs.xm125.highAccuracy, inputs.xm125.lowPower]);
-                normalizeInputGroup([inputs.sim7080g.on, inputs.sim7080g.lowPowerOn, inputs.sim7080g.lowPowerIdle]);
-                normalizeInputGroup([inputs.ledShift.on, inputs.ledShift.off]);
-
-                // Calculate average power for each component
-                const espPower = calculateComponentPower({
-                    modemOff: [Number(inputs.esp.modemOff.value), powerValues.esp.modemOff],
-                    deepSleep: [Number(inputs.esp.deepSleep.value), powerValues.esp.deepSleep]
-                });
-
-                const xm125Power = calculateComponentPower({
-                    highAccuracy: [Number(inputs.xm125.highAccuracy.value), powerValues.xm125.highAccuracy],
-                    lowPower: [Number(inputs.xm125.lowPower.value), powerValues.xm125.lowPower]
-                });
-
-                const sim7080gPower = calculateComponentPower({
-                    on: [Number(inputs.sim7080g.on.value), powerValues.sim7080g.on],
-                    lowPowerOn: [Number(inputs.sim7080g.lowPowerOn.value), powerValues.sim7080g.lowPowerOn],
-                    lowPowerIdle: [Number(inputs.sim7080g.lowPowerIdle.value), powerValues.sim7080g.lowPowerIdle]
-                });
-
-                const ledShiftPower = calculateComponentPower({
-                    on: [Number(inputs.ledShift.on.value), powerValues.ledShift.on],
-                    off: [Number(inputs.ledShift.off.value), powerValues.ledShift.off]
-                });
-
-                // Calculate total average power
-                const totalPower = espPower + xm125Power + sim7080gPower + ledShiftPower;
-
-                // Calculate daily and annual energy consumption (in mWh)
-                const dailyEnergy = totalPower * 24;
-                const annualEnergy = dailyEnergy * 365;
-
-                // Display results
-                results.avgPower.textContent = `${totalPower.toFixed(2)} mW`;
-                results.dailyEnergy.textContent = `${dailyEnergy.toFixed(2)} mWh (${(dailyEnergy / 1000).toFixed(4)} Wh)`;
-                results.annualEnergy.textContent = `${annualEnergy.toFixed(2)} mWh (${(annualEnergy / 1000).toFixed(2)} Wh)`;
-                
-                results.espPower.textContent = `${espPower.toFixed(2)} mW`;
-                results.xm125Power.textContent = `${xm125Power.toFixed(2)} mW`;
-                results.sim7080gPower.textContent = `${sim7080gPower.toFixed(2)} mW`;
-                results.ledShiftPower.textContent = `${ledShiftPower.toFixed(2)} mW`;
+        // Default components configuration
+        const defaultComponents = [
+            {
+                name: "ESP",
+                states: [
+                    { name: "Modem-off", power: 100 },
+                    { name: "Deep sleep", power: 0.017 }
+                ]
+            },
+            {
+                name: "XM125 Sensor",
+                states: [
+                    { name: "High-accuracy sensing", power: 45 },
+                    { name: "Low-power sensing", power: 6 }
+                ]
+            },
+            {
+                name: "SIM7080g Modem",
+                states: [
+                    { name: "ON", power: 250 },
+                    { name: "Low-power ON", power: 70 },
+                    { name: "Low-power idle/sleep", power: 2 }
+                ]
+            },
+            {
+                name: "LED Shift Register (74HC595)",
+                states: [
+                    { name: "ON", power: 15 },
+                    { name: "OFF", power: 0.4 }
+                ]
             }
+        ];
 
-            // Function to calculate component power
-            function calculateComponentPower(states) {
-                let totalPowerSeconds = 0;
-                for (const state in states) {
-                    const [seconds, power] = states[state];
-                    totalPowerSeconds += seconds * power;
-                }
-                return totalPowerSeconds / 3600; // Average mW
-            }
+        // Store all active components
+        let components = [];
 
-            // Function to enforce that all inputs add up to 3600 seconds
-            function normalizeInputGroup(inputElements) {
-                // Add event listeners to all inputs in the group
-                inputElements.forEach(input => {
-                    input.addEventListener('input', function() {
-                        validateGroupTotal(inputElements);
-                    });
-                });
-                
-                // Initial validation
-                validateGroupTotal(inputElements);
-            }
+        // Add a new component
+        function addComponent(component) {
+            const componentId = `component-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             
-            // Function to validate and adjust inputs to ensure total is 3600 seconds
-            function validateGroupTotal(inputElements) {
-                let total = 0;
-                let lastNonZeroInput = null;
+            // Create the HTML for the component
+            let statesHTML = '';
+            component.states.forEach((state, index) => {
+                statesHTML += `
+                <div class="state-input">
+                    <label>${state.name} (${state.power} mW)</label>
+                    <input type="number" data-component="${componentId}" data-state="${index}" 
+                           min="0" max="3600" value="${index === component.states.length - 1 ? 3600 : 0}" 
+                           onchange="handleStateChange('${componentId}')" 
+                           oninput="handleStateChange('${componentId}')">
+                </div>`;
+            });
+            
+            const componentHTML = `
+            <div class="component-group" id="${componentId}">
+                <div class="component-header">
+                    <span>${component.name}</span>
+                    <span>Seconds per hour</span>
+                    <button class="remove-btn" onclick="removeComponent('${componentId}')">×</button>
+                </div>
+                <div class="component-states" id="${componentId}-states">
+                    ${statesHTML}
+                </div>
+                <button type="button" class="small add-state-btn" onclick="openModal('${componentId}')">+ Add State</button>
+            </div>`;
+            
+            // Add the component to the DOM
+            document.getElementById('components-container').insertAdjacentHTML('beforeend', componentHTML);
+            
+            // Store component data
+            const componentData = {
+                id: componentId,
+                name: component.name,
+                states: component.states.map(state => ({ 
+                    name: state.name, 
+                    power: state.power 
+                }))
+            };
+            
+            components.push(componentData);
+            
+            // Calculate power
+            calculatePower();
+            
+            return componentId;
+        }
+        
+        // Handle input/change in state time
+        function handleStateChange(componentId) {
+            // Find all inputs for this component
+            const inputs = document.querySelectorAll(`input[data-component="${componentId}"]`);
+            validateGroupTotal(inputs, componentId);
+            calculatePower();
+        }
+        
+        // Validate that total time equals 3600 seconds (1 hour)
+        function validateGroupTotal(inputs, componentId) {
+            let total = 0;
+            let lastNonZeroInputIdx = -1;
+            
+            // Calculate total and find last non-zero input
+            Array.from(inputs).forEach((input, index) => {
+                const value = Number(input.value) || 0;
+                input.value = value; // Ensure valid number
+                total += value;
                 
-                // Calculate total and find last non-zero input
-                inputElements.forEach(input => {
-                    const value = Number(input.value) || 0;
-                    input.value = value; // Ensure valid number
-                    total += value;
-                    
-                    if (value > 0) {
-                        lastNonZeroInput = input;
+                if (value > 0) {
+                    lastNonZeroInputIdx = index;
+                }
+            });
+            
+            // If total isn't 3600, adjust the last non-zero input
+            if (total !== 3600 && lastNonZeroInputIdx >= 0) {
+                let otherTotal = 0;
+                
+                Array.from(inputs).forEach((input, index) => {
+                    if (index !== lastNonZeroInputIdx) {
+                        otherTotal += Number(input.value) || 0;
                     }
                 });
                 
-                // If total isn't 3600, adjust the last non-zero input
-                if (total !== 3600 && lastNonZeroInput) {
-                    let otherTotal = 0;
-                    
-                    inputElements.forEach(input => {
-                        if (input !== lastNonZeroInput) {
-                            otherTotal += Number(input.value) || 0;
-                        }
-                    });
-                    
-                    const newValue = Math.max(0, 3600 - otherTotal);
-                    lastNonZeroInput.value = newValue;
-                }
-                // If all inputs are zero, set the last input to 3600
-                else if (total === 0) {
-                    inputElements[inputElements.length - 1].value = 3600;
-                }
+                const newValue = Math.max(0, 3600 - otherTotal);
+                inputs[lastNonZeroInputIdx].value = newValue;
             }
-
-            // Initialize with a first calculation
+            // If all inputs are zero, set the last input to 3600
+            else if (total === 0 && inputs.length > 0) {
+                inputs[inputs.length - 1].value = 3600;
+            }
+        }
+        
+        // Calculate power consumption
+        function calculatePower() {
+            let totalPower = 0;
+            let componentBreakdown = '';
+            
+            components.forEach(component => {
+                let componentPower = 0;
+                const componentId = component.id;
+                const inputs = document.querySelectorAll(`input[data-component="${componentId}"]`);
+                
+                Array.from(inputs).forEach((input, index) => {
+                    const seconds = Number(input.value) || 0;
+                    const power = component.states[index].power;
+                    const statePower = (seconds * power) / 3600; // Average mW
+                    componentPower += statePower;
+                });
+                
+                totalPower += componentPower;
+                componentBreakdown += `<div>${component.name}: <span>${componentPower.toFixed(2)} mW</span></div>`;
+            });
+            
+            // Calculate daily and annual energy consumption (in mWh)
+            const dailyEnergy = totalPower * 24;
+            const annualEnergy = dailyEnergy * 365;
+            
+            // Display results
+            document.getElementById('avg-power').textContent = `${totalPower.toFixed(2)} mW`;
+            document.getElementById('daily-energy').textContent = `${dailyEnergy.toFixed(2)} mWh (${(dailyEnergy / 1000).toFixed(4)} Wh)`;
+            document.getElementById('annual-energy').textContent = `${annualEnergy.toFixed(2)} mWh (${(annualEnergy / 1000).toFixed(2)} Wh)`;
+            document.getElementById('component-breakdown').innerHTML = componentBreakdown;
+        }
+        
+        // Open modal for adding a new state
+        function openModal(componentId) {
+            document.getElementById('modal-component-id').value = componentId;
+            document.getElementById('modal-state-name').value = '';
+            document.getElementById('modal-state-power').value = '';
+            document.getElementById('add-state-modal').style.display = 'flex';
+            document.getElementById('modal-state-name').focus();
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('add-state-modal').style.display = 'none';
+        }
+        
+        // Add state from modal - FIXED FUNCTION
+        function addStateFromModal() {
+            const componentId = document.getElementById('modal-component-id').value;
+            const stateName = document.getElementById('modal-state-name').value.trim();
+            const statePower = parseFloat(document.getElementById('modal-state-power').value);
+            
+            // Validate inputs
+            if (!stateName) {
+                alert('Please enter a state name');
+                return;
+            }
+            
+            if (isNaN(statePower) || statePower < 0) {
+                alert('Please enter a valid power consumption value');
+                return;
+            }
+            
+            // Find component
+            const componentIndex = components.findIndex(c => c.id === componentId);
+            if (componentIndex === -1) {
+                alert('Component not found');
+                closeModal();
+                return;
+            }
+            
+            // Add state to component data
+            const newStateIndex = components[componentIndex].states.length;
+            components[componentIndex].states.push({
+                name: stateName,
+                power: statePower
+            });
+            
+            // Add state to DOM
+            const stateHTML = `
+            <div class="state-input">
+                <label>${stateName} (${statePower} mW)</label>
+                <input type="number" data-component="${componentId}" data-state="${newStateIndex}" 
+                       min="0" max="3600" value="0" 
+                       onchange="handleStateChange('${componentId}')" 
+                       oninput="handleStateChange('${componentId}')">
+            </div>`;
+            
+            document.getElementById(`${componentId}-states`).insertAdjacentHTML('beforeend', stateHTML);
+            
+            // Ensure the input can be modified by triggering the validation
+            setTimeout(() => {
+                const inputs = document.querySelectorAll(`input[data-component="${componentId}"]`);
+                // Set the last value to 0 to force recalculation
+                if (inputs.length > 1) {
+                    const lastIndex = inputs.length - 2; // Previous last state
+                    if (lastIndex >= 0) {
+                        const currentValue = Number(inputs[lastIndex].value) || 0;
+                        if (currentValue === 3600) {
+                            // If the previous last state had 3600, redistribute
+                            inputs[lastIndex].value = 3000;
+                            inputs[inputs.length - 1].value = 600;
+                        }
+                    }
+                }
+                // Update calculations
+                handleStateChange(componentId);
+            }, 0);
+            
+            // Close modal
+            closeModal();
+        }
+        
+        // Add a state row in the new component form
+        function addStateRow() {
+            const stateRowHTML = `
+            <div class="form-row state-row">
+                <div class="form-group">
+                    <label>State Name</label>
+                    <input type="text" class="state-name" placeholder="e.g. Active">
+                </div>
+                <div class="form-group">
+                    <label>Power (mW)</label>
+                    <input type="number" class="state-power" min="0" step="0.001" placeholder="e.g. 25">
+                </div>
+                <button type="button" class="remove-btn" onclick="removeStateRow(this)">×</button>
+            </div>`;
+            
+            document.getElementById('new-component-states').insertAdjacentHTML('beforeend', stateRowHTML);
+        }
+        
+        // Remove a state row from the new component form
+        function removeStateRow(button) {
+            const row = button.closest('.state-row');
+            if (document.querySelectorAll('#new-component-states .state-row').length > 1) {
+                row.remove();
+            } else {
+                alert('You must have at least one state');
+            }
+        }
+        
+        // Add a new component from form
+        function addNewComponent() {
+            const componentName = document.getElementById('new-component-name').value.trim();
+            if (!componentName) {
+                alert('Please enter a component name');
+                return;
+            }
+            
+            const stateRows = document.querySelectorAll('#new-component-states .state-row');
+            const states = [];
+            
+            for (const row of stateRows) {
+                const stateName = row.querySelector('.state-name').value.trim();
+                const statePower = parseFloat(row.querySelector('.state-power').value);
+                
+                if (!stateName || isNaN(statePower)) {
+                    alert('Please enter valid state name and power values');
+                    return;
+                }
+                
+                states.push({
+                    name: stateName,
+                    power: statePower
+                });
+            }
+            
+            // Add the new component
+            addComponent({
+                name: componentName,
+                states: states
+            });
+            
+            // Clear the form
+            document.getElementById('new-component-name').value = '';
+            document.getElementById('new-component-states').innerHTML = '';
+            addStateRow();
+        }
+        
+        // Remove a component
+        function removeComponent(componentId) {
+            // Remove from DOM
+            document.getElementById(componentId).remove();
+            
+            // Remove from components array
+            components = components.filter(c => c.id !== componentId);
+            
+            // Recalculate power
             calculatePower();
-        });
+        }
+        
+        // Initialize calculator with default components
+        window.onload = function() {
+            // Clear any existing components
+            document.getElementById('components-container').innerHTML = '';
+            components = [];
+            
+            // Load default components
+            defaultComponents.forEach(component => {
+                addComponent(component);
+            });
+            
+            // Add initial state row
+            addStateRow();
+        };
     </script>
 </body>
 </html>
