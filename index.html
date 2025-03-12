@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Device Power Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .calculator {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .component-group {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .component-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2980b9;
+        }
+        .component-states {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+        }
+        .state-input {
+            display: flex;
+            flex-direction: column;
+            background-color: #fff;
+            border-radius: 4px;
+            padding: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .state-input label {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .state-input input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .results {
+            margin-top: 30px;
+            background-color: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .results h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #ccc;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-value {
+            font-weight: bold;
+            color: #2980b9;
+        }
+        button {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            display: block;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3498db;
+        }
+        .notes {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <h1>IoT Device Power Calculator</h1>
+    
+    <div class="calculator">
+        <div class="component-group">
+            <div class="component-header">
+                <span>ESP</span>
+                <span>Seconds per hour</span>
+            </div>
+            <div class="component-states">
+                <div class="state-input">
+                    <label>Modem-off (100 mW)</label>
+                    <input type="number" id="esp-modem-off" value="0" min="0" max="3600">
+                </div>
+                <div class="state-input">
+                    <label>Deep sleep (0.017 mW)</label>
+                    <input type="number" id="esp-deep-sleep" value="3600" min="0" max="3600">
+                </div>
+            </div>
+        </div>
+
+        <div class="component-group">
+            <div class="component-header">
+                <span>XM125 Sensor</span>
+                <span>Seconds per hour</span>
+            </div>
+            <div class="component-states">
+                <div class="state-input">
+                    <label>High-accuracy sensing (45 mW)</label>
+                    <input type="number" id="xm125-high-accuracy" value="0" min="0" max="3600">
+                </div>
+                <div class="state-input">
+                    <label>Low-power sensing (6 mW)</label>
+                    <input type="number" id="xm125-low-power" value="0" min="0" max="3600">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="component-group">
+            <div class="component-header">
+                <span>SIM7080g Modem</span>
+                <span>Seconds per hour</span>
+            </div>
+            <div class="component-states">
+                <div class="state-input">
+                    <label>ON (250 mW)</label>
+                    <input type="number" id="sim7080g-on" value="0" min="0" max="3600">
+                </div>
+                <div class="state-input">
+                    <label>Low-power ON (70 mW)</label>
+                    <input type="number" id="sim7080g-low-power-on" value="0" min="0" max="3600">
+                </div>
+                <div class="state-input">
+                    <label>Low-power idle/sleep (2 mW)</label>
+                    <input type="number" id="sim7080g-low-power-idle" value="0" min="0" max="3600">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="component-group">
+            <div class="component-header">
+                <span>LED Shift Register (74HC595)</span>
+                <span>Seconds per hour</span>
+            </div>
+            <div class="component-states">
+                <div class="state-input">
+                    <label>ON (15 mW)</label>
+                    <input type="number" id="led-shift-on" value="0" min="0" max="3600">
+                </div>
+                <div class="state-input">
+                    <label>OFF (0.4 mW)</label>
+                    <input type="number" id="led-shift-off" value="3600" min="0" max="3600">
+                </div>
+            </div>
+        </div>
+
+        <button id="calculate-btn">Calculate Power Consumption</button>
+        
+        <div class="results">
+            <h2>Results</h2>
+            <div class="result-item">
+                <span>Average Power Consumption:</span>
+                <span class="result-value" id="avg-power">0 mW</span>
+            </div>
+            <div class="result-item">
+                <span>Daily Energy Consumption:</span>
+                <span class="result-value" id="daily-energy">0 mWh</span>
+            </div>
+            <div class="result-item">
+                <span>Annual Energy Consumption:</span>
+                <span class="result-value" id="annual-energy">0 mWh</span>
+            </div>
+            <div class="result-item">
+                <span>Component Breakdown:</span>
+            </div>
+            <div id="component-breakdown">
+                <div style="margin-left: 20px;">ESP: <span id="esp-power">0 mW</span></div>
+                <div style="margin-left: 20px;">XM125: <span id="xm125-power">0 mW</span></div>
+                <div style="margin-left: 20px;">SIM7080g: <span id="sim7080g-power">0 mW</span></div>
+                <div style="margin-left: 20px;">LED Shift Register: <span id="led-shift-power">0 mW</span></div>
+            </div>
+        </div>
+        
+        <div class="notes">
+            <p><strong>Note:</strong> The calculator ensures that the total seconds for each component adds up to exactly 3600 (one hour). When you modify a value, the last non-zero value in that component group will automatically adjust to maintain the total.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Define power values in mW
+            const powerValues = {
+                esp: {
+                    modemOff: 100,
+                    deepSleep: 0.017
+                },
+                xm125: {
+                    highAccuracy: 45,
+                    lowPower: 6
+                },
+                sim7080g: {
+                    on: 250,
+                    lowPowerOn: 70,
+                    lowPowerIdle: 2
+                },
+                ledShift: {
+                    on: 15,
+                    off: 0.4
+                }
+            };
+
+            // Get all input fields
+            const inputs = {
+                esp: {
+                    modemOff: document.getElementById('esp-modem-off'),
+                    deepSleep: document.getElementById('esp-deep-sleep')
+                },
+                xm125: {
+                    highAccuracy: document.getElementById('xm125-high-accuracy'),
+                    lowPower: document.getElementById('xm125-low-power')
+                },
+                sim7080g: {
+                    on: document.getElementById('sim7080g-on'),
+                    lowPowerOn: document.getElementById('sim7080g-low-power-on'),
+                    lowPowerIdle: document.getElementById('sim7080g-low-power-idle')
+                },
+                ledShift: {
+                    on: document.getElementById('led-shift-on'),
+                    off: document.getElementById('led-shift-off')
+                }
+            };
+
+            // Get result elements
+            const results = {
+                avgPower: document.getElementById('avg-power'),
+                dailyEnergy: document.getElementById('daily-energy'),
+                annualEnergy: document.getElementById('annual-energy'),
+                espPower: document.getElementById('esp-power'),
+                xm125Power: document.getElementById('xm125-power'),
+                sim7080gPower: document.getElementById('sim7080g-power'),
+                ledShiftPower: document.getElementById('led-shift-power')
+            };
+
+            // Add event listener to calculate button
+            document.getElementById('calculate-btn').addEventListener('click', calculatePower);
+
+            // Function to calculate power consumption
+            function calculatePower() {
+                // Normalize inputs to ensure they add up to 3600 seconds per component
+                normalizeInputGroup([inputs.esp.modemOff, inputs.esp.deepSleep]);
+                normalizeInputGroup([inputs.xm125.highAccuracy, inputs.xm125.lowPower]);
+                normalizeInputGroup([inputs.sim7080g.on, inputs.sim7080g.lowPowerOn, inputs.sim7080g.lowPowerIdle]);
+                normalizeInputGroup([inputs.ledShift.on, inputs.ledShift.off]);
+
+                // Calculate average power for each component
+                const espPower = calculateComponentPower({
+                    modemOff: [Number(inputs.esp.modemOff.value), powerValues.esp.modemOff],
+                    deepSleep: [Number(inputs.esp.deepSleep.value), powerValues.esp.deepSleep]
+                });
+
+                const xm125Power = calculateComponentPower({
+                    highAccuracy: [Number(inputs.xm125.highAccuracy.value), powerValues.xm125.highAccuracy],
+                    lowPower: [Number(inputs.xm125.lowPower.value), powerValues.xm125.lowPower]
+                });
+
+                const sim7080gPower = calculateComponentPower({
+                    on: [Number(inputs.sim7080g.on.value), powerValues.sim7080g.on],
+                    lowPowerOn: [Number(inputs.sim7080g.lowPowerOn.value), powerValues.sim7080g.lowPowerOn],
+                    lowPowerIdle: [Number(inputs.sim7080g.lowPowerIdle.value), powerValues.sim7080g.lowPowerIdle]
+                });
+
+                const ledShiftPower = calculateComponentPower({
+                    on: [Number(inputs.ledShift.on.value), powerValues.ledShift.on],
+                    off: [Number(inputs.ledShift.off.value), powerValues.ledShift.off]
+                });
+
+                // Calculate total average power
+                const totalPower = espPower + xm125Power + sim7080gPower + ledShiftPower;
+
+                // Calculate daily and annual energy consumption (in mWh)
+                const dailyEnergy = totalPower * 24;
+                const annualEnergy = dailyEnergy * 365;
+
+                // Display results
+                results.avgPower.textContent = `${totalPower.toFixed(2)} mW`;
+                results.dailyEnergy.textContent = `${dailyEnergy.toFixed(2)} mWh (${(dailyEnergy / 1000).toFixed(4)} Wh)`;
+                results.annualEnergy.textContent = `${annualEnergy.toFixed(2)} mWh (${(annualEnergy / 1000).toFixed(2)} Wh)`;
+                
+                results.espPower.textContent = `${espPower.toFixed(2)} mW`;
+                results.xm125Power.textContent = `${xm125Power.toFixed(2)} mW`;
+                results.sim7080gPower.textContent = `${sim7080gPower.toFixed(2)} mW`;
+                results.ledShiftPower.textContent = `${ledShiftPower.toFixed(2)} mW`;
+            }
+
+            // Function to calculate component power
+            function calculateComponentPower(states) {
+                let totalPowerSeconds = 0;
+                for (const state in states) {
+                    const [seconds, power] = states[state];
+                    totalPowerSeconds += seconds * power;
+                }
+                return totalPowerSeconds / 3600; // Average mW
+            }
+
+            // Function to enforce that all inputs add up to 3600 seconds
+            function normalizeInputGroup(inputElements) {
+                // Add event listeners to all inputs in the group
+                inputElements.forEach(input => {
+                    input.addEventListener('input', function() {
+                        validateGroupTotal(inputElements);
+                    });
+                });
+                
+                // Initial validation
+                validateGroupTotal(inputElements);
+            }
+            
+            // Function to validate and adjust inputs to ensure total is 3600 seconds
+            function validateGroupTotal(inputElements) {
+                let total = 0;
+                let lastNonZeroInput = null;
+                
+                // Calculate total and find last non-zero input
+                inputElements.forEach(input => {
+                    const value = Number(input.value) || 0;
+                    input.value = value; // Ensure valid number
+                    total += value;
+                    
+                    if (value > 0) {
+                        lastNonZeroInput = input;
+                    }
+                });
+                
+                // If total isn't 3600, adjust the last non-zero input
+                if (total !== 3600 && lastNonZeroInput) {
+                    let otherTotal = 0;
+                    
+                    inputElements.forEach(input => {
+                        if (input !== lastNonZeroInput) {
+                            otherTotal += Number(input.value) || 0;
+                        }
+                    });
+                    
+                    const newValue = Math.max(0, 3600 - otherTotal);
+                    lastNonZeroInput.value = newValue;
+                }
+                // If all inputs are zero, set the last input to 3600
+                else if (total === 0) {
+                    inputElements[inputElements.length - 1].value = 3600;
+                }
+            }
+
+            // Initialize with a first calculation
+            calculatePower();
+        });
+    </script>
+</body>
+</html>
